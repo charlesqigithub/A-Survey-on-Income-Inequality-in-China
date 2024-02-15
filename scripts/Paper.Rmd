@@ -1,0 +1,392 @@
+---
+title: "A Survey on Income Inequality in China"
+author: 
+  - 
+  -
+thanks: "Code and data are available at: https://github.com/"
+date: "`r format(Sys.time(), '%d %B %Y')`"
+abstract: "In order to deal with the widening income gap, the Chinese government has always focused on income redistribution. This article traces the evolution of income redistribution policies since the economic reform in 1978, and explores factors such as urban-rural and regional income differences that lead to gaps in income redistribution policies. It also assesses the effectiveness of government policies aimed at reducing inequality and discusses the implications of trends in income distribution for social stability and economic growth. The article analyzes data trends and policy interventions and finds that the Gini coefficient, a measure of income inequality, has generally increased over the past four decades, both at the household level and between regions and urban and rural areas. However, inequality trends over the past decade have stabilized and even declined slightly, albeit to varying degrees. The article also points to an inverse relationship between income inequality and intergenerational mobility, which is consistent with evidence of the “Great Gatsby” curve shown in developed countries. Finally, the article explores the challenges and prospects for achieving a more equitable income distribution in China's rapidly changing economy."
+output:
+  bookdown::pdf_document2:
+    latex_engin: xelatex
+toc: FALSE
+bibliography: references.bib
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+knitr::opts_chunk$set(warning = FALSE)
+knitr::opts_chunk$set(message = FALSE)
+
+library(tidyverse)
+library(dplyr)
+library(ggplot2)
+library(readxl)
+library(haven)
+```
+
+
+# Introduction
+
+*This reproduction was performed after a replication on the Social Science Reproduction platform: ****[link here](https://www.socialsciencereproduction.org/reproductions)***
+
+In 1978, China began to explore the implementation of reform and opening up, transforming the centrally planned economy into a mixed market economy, which greatly promoted the development of productivity. In the past 40 years, China's economy has expanded rapidly and grown at a high speed. But at the same time, income inequality has also increased rapidly over the same period. The Gini coefficient is a commonly used indicator to measure income inequality. According to estimates, China's Gini coefficient rose rapidly from 0.30 in 1978 to about 0.45 in 2016 (Figure \@ref(fig:gini)). This shows that many people do not benefit equally from China's economic reforms. If we only focus on per capita GDP and ignore the increase in income inequality, it will cause serious social problems. Since the government announced the elimination of absolute poverty, the issue of income inequality has been a serious concern in Chinese society. By carefully studying China's income inequality and urban-rural, regional and other data, we hope to explore and analyze the influencing factors of this phenomenon. Junsen Zhang’s paper in [`A Survey on Income Inequality in China`](https://www.aeaweb.org/articles?id=10.1257/jel.20201495) found that income inequality increased rapidly in the first three decades since 1978, but stabilized and declined slightly in the past decade, which is consistent with the famous Kurtz’s Consistent with the Nietz hypothesis. In addition to documenting trends and patterns over time, across groups and regions, the sources of income inequality are systematically discussed.  
+
+In the following paper, we will reproduce the results in Zhang's paper to explore the development trend and sources of income inequality. First, we discuss inter-group inequality and intra-group inequality related to the urban-rural gap, and then analyze the regional gaps in income inequality in China, because the correlation between regional gaps between the east, middle and west of China and national development policies is obvious. Then we look at income inequality from the perspective of households and individuals by examining the sources and types of income. Finally, explore the relationship between income inequality and intergenerational mobility, and compare it with the Great Gatsby curve in developed countries.
+
+
+## Overview of Relevant Literature
+
+China experienced low levels of income inequality during the Maoist era, this is a direct result of policies aimed at promoting an egalitarian society. Urban residents receive a range of social benefits such as employment, housing, and health care, while rural communities are organized into collectives to promote equal distribution of agricultural resources. Between 1952 and 1965, the Gini coefficient for this period ranged from 0.25 to 0.26, indicating a relatively equitable income distribution compared to the Gini coefficient of 0.38 in 2013 [@liao]. The economic reforms launched in 1978 marked a major departure from these policies and led to a rapid increase in income inequality, a phenomenon that mirrored the early stages of development in Western countries such as the United States. This alignment with the Kuznets hypothesis suggests that income inequality tends to increase during the initial phases of urbanization and industrialization, only to decrease once the economy has advanced and absorbed a significant portion of the rural labor force into industrial sectors [@kuznets].
+
+The rising income inequality has attracted considerable scholarly attention, focusing on its impact on economic growth, poverty alleviation, and health outcomes. Research using China's provincial panel data (1987-2001) shows that inequality has a negative impact on economic growth [@lu], while analyses of rural areas indicate that regions with faster increases in inequality have seen less progress in combating poverty [@ravallion]. In addition, research based on the China Health and Nutrition Survey (1991-2006) shows that as income inequality increases, the health gap between the rich and the poor is also widening [@baeten]. Despite the government's announcement of success in eradicating absolute poverty, persistent relative income inequality remains a major public concern, with the People's Daily publishing multiple editorials highlighting the challenges posed by unequal opportunities.
+
+
+```{r gini,fig.cap="Real per Capita GDP and Gini Coefficient in China, 1978–2016"}
+gini <- read_xlsx("data1.xlsx")
+
+coef <- 10000
+inverse_coef <- function(x) x / coef
+ggplot(gini, aes(x = Year)) + 
+  geom_point(aes(y = `Per capita GDP (in 2010$)`, color = "Per capita GDP"), pch = 16) +
+  geom_line(aes(y = `Per capita GDP (in 2010$)`, color = "Per capita GDP")) + 
+  geom_point(aes(y = `Gini coefficient` * coef, color = "Gini"), pch = 15) + 
+  geom_line(aes(y = `Gini coefficient` * coef, color = "Gini")) + 
+  scale_y_continuous(
+    name = "Per capita GDP (in 2010 $)",
+    sec.axis = sec_axis(inverse_coef, name = "Gini")
+  ) +
+  scale_x_continuous(breaks = seq(1978, 2016, by = 1))+
+  scale_color_manual(values = c("Per capita GDP" = "darkblue", "Gini" = "darkred")) +
+  theme_classic() +
+  theme(
+    legend.title = element_blank(),
+    legend.position = "top",
+    legend.justification = "left",
+    legend.box.just = "left",
+    legend.background = element_rect(color = "black"), 
+    axis.text.x = element_text(angle = 45, size = 7, vjust = 0.5)) +
+  labs(x = " ", y =" ", title = " ") +
+  labs(x = " ", y =" ", title = " ") +
+  guides(color = guide_legend(title = NULL))
+```
+
+# Data  
+
+The article replicates Junsen Zhang's paper, thus employing the same datasets. Multiple income inequality datasets are used in this article for comprehensive exploratory data analysis. 
+
+## Data Source  
+
+Before discussing China's income distribution patterns, it is helpful to first introduce several official and unofficial data sets that are widely used for inequality estimates in China. These official datasets are initiated by various public agencies. The Urban Household Survey (UHS) and Rural Household Survey (RHS) collected by the National Bureau of Statistics (NBS) are the basic data used to assess income inequality in China. However, NBS microdata are proprietary to certain researchers, making it difficult to truly assess the quality of the data. As a result, most early estimates, such as those from the World Bank, were based on tables rather than microdata provided by the National Bureau of Statistics using UHS and RHS.
+
+Another widely used dataset is the China Household Income Project (CHIP), developed by the National Bureau of Statistics in collaboration with the Chinese Academy of Social Sciences and later Beijing Normal University. Six waves of household surveys in 1988, 1995, 2002, 2007, 2008, and 2013 have been carried out, covering comprehensive information on income, expenditure, employment, etc., and specifically studying the issue of income inequality. A notable strength of CHIP is that it conducts ongoing surveys of urban and rural households and includes a separate survey of migrants starting in 2007. In addition, to collect information on economic and institutional changes in China's rural areas, China's Ministry of Agriculture has been conducting a survey commonly known as the "Migrant Population Survey." Since 1986, rural permanent observation point surveys have been carried out relying on the official rural fixed observation point system. This is a longitudinal survey of rural areas (except 1992 and 1994) covering 23,000 households in 360 villages in 31 provinces.  
+
+Figure \@ref(fig:gini2) shows various estimates of the Gini coefficient based on official and unofficial data sets from 2002 to 2015. In 2010, the Gini coefficient estimates from the three sources, CFPS, CGSS, and CLDS, were relatively close, implying consistency among unofficial data. In addition, figure \@ref(fig:gini2) shows that the estimates of CHFS rank highest, the estimates of CFPS, CGSS, and CLDS are in the middle, while the estimates of NBS and CHIP are the lowest. The difference between official and unofficial estimates may be attributable to different revenue measurement strategies and estimation methods.
+  
+  
+- National Bureau of Statistics (NBS)
+- Chinese Household Income Project (CHIP)
+- China Family Panel Studies (CFPS)
+- China Household Finance Survey (CHFS)
+- Chinese General Social Survey (CGSS)
+- China Labor Force Dynamic Survey (CLDS)
+
+```{r gini2, fig.cap="Comparison of the Gini Coefficients from Various Sources in China, 2002–15"}
+gini2 <- read_excel("data2.xlsx")
+
+gini2$`Data sources` <- factor(gini2$`Data sources`, levels = gini2$`Data sources`)
+ggplot(gini2, aes(x = `Data sources`, y = `Gini coefficient`, fill = `Data sources`)) +
+  geom_bar(stat = "identity", width = 0.7) +
+  geom_text(aes(label = round(`Gini coefficient`,2)), vjust = -0.5, size = 3.5) +
+  scale_fill_manual(values = c(rep("blue", 3), rep("red", 3), rep("orange", 3), 
+                               rep("green", 2), rep("purple", 2), 
+                               rep("darkgreen", 1))) +
+  theme_classic() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1),
+        legend.position = "none") +
+  labs(x = "", y = "", title = "")
+
+```
+
+
+## Methodology  
+
+This article analyzes longitudinal data from national surveys or official statistics to track changes in income distribution over time. The Gini coefficient and other inequality indicators are also used to quantify income gaps and study their evolution. Beyond this, provincial level data are compared to understand regional differences and the impact of local policies on inequality. In addition, explore the relationship between intergenerational mobility and income inequality based on the Kuznets hypothesis.  
+
+This article will utilize `R` [@citeR] for data analysis, which is a powerful software in the statistical field for data analysis. The `readxl` [@readxl] package is used for reading Excel data, `dplyr` [@dplyr] and tidyverse for data cleaning and transformation, while `ggplot2` [@ggplot2] package is used for data visualization.  
+
+
+```{r gini3, fig.cap="Urban-rural disparity and Gini coefficient"}
+gini3 <- read_excel("data3.xlsx")
+
+coef <- 7
+inverse_coef <- function(x) x / coef
+ggplot(gini3, aes(x = Year)) + 
+  geom_point(aes(y = `Urban-rural disparity`, color = "Urban-rural disparity"), pch = 16) +
+  geom_line(aes(y = `Urban-rural disparity`, color = "Urban-rural disparity")) + 
+  geom_point(aes(y = `Gini coefficient` * coef, color = "Gini"), pch = 15) + 
+  geom_line(aes(y = `Gini coefficient` * coef, color = "Gini")) + 
+  scale_y_continuous(
+    name = "Urban-rural disparity",
+    sec.axis = sec_axis(inverse_coef, name = "Gini")
+  ) +
+  scale_x_continuous(breaks = seq(1978, 2016, by = 1))+
+  scale_color_manual(values = c("Urban-rural disparity" = "darkblue", "Gini" = "darkred")) +
+  theme_classic() +
+  theme(legend.title = element_blank(), legend.position = "top",
+        legend.justification = "left",legend.box.just = "left",
+        axis.text.x = element_text(angle = 45, size = 7, vjust = 0.5)) +
+  labs(x = " ", y =" ", title = " ") +
+  guides(color = guide_legend(title = NULL))
+```
+\newpage
+
+# Result  
+
+## Urban–rural Divide  
+
+Our analysis highlights significant growing trends in inter-group and intra-group inequality in China's urban-rural divide. As shown in Figure \@ref(fig:gini3), the urban-rural income gap is measured by the ratio of urban disposable income to rural net income, showing the evolution of the urban-rural income gap from 1978 to 2016. Initially, the gap dropped from 2.6 in 1978 to 1.9 in 1985, which was attributed to rural reforms that greatly benefited rural residents. However, after 1984, as the focus of reform shifted to urban areas, this gap further widened, reaching about 2.9 in 1994. Although it declined slightly in the mid-1990s, the gap widened again, reaching a peak of 3.3 in 2009, further widening the gap in per capita income, with urban areas three times that of rural areas.  
+
+Figure \@ref(fig:gini4) shows persistent and growing income inequality in urban and rural areas. The difference in the Gini coefficient reflects the inequality in the impact of China's economic policies and development strategies on the two social classes. The persistently high rural Gini coefficient indicates that rural residents face greater challenges in income distribution, possibly due to lower diversification of income sources and limited opportunities to enjoy the benefits of economic reforms. In contrast, the relative stability of urban Gini coefficients after 2005 suggests the existence of mechanisms in urban environments that help mitigate income inequality.  
+
+
+```{r, gini4, fig.cap="Urban and Rural Gini Coefficients in China, 1978–2010"}
+gini4 <- read_excel("data4.xlsx")
+
+ggplot(gini4, aes(x = Year)) + 
+  geom_point(aes(y = `Rural Gini coefficient`, color = "Rural Gini"), pch = 16) +
+  geom_line(aes(y = `Rural Gini coefficient`, color = "Rural Gini")) + 
+  geom_point(aes(y = `Urban Gini coefficient`, color = "Urban Gini"), pch = 15) + 
+  geom_line(aes(y = `Urban Gini coefficient`, color = "Urban Gini")) + 
+  scale_x_continuous(breaks = seq(1978, 2016, by = 1))+
+  scale_color_manual(values = c("Rural Gini" = "darkblue",
+                                "Urban Gini" = "darkred")) +
+  theme_classic() +
+  theme(legend.title = element_blank(),
+    legend.position = "top",
+    legend.justification = "left",
+    legend.box.just = "left",
+    legend.background = element_rect(color = "black"), 
+    axis.text.x = element_text(angle = 45, size = 7, vjust = 0.5) ) +
+  labs(x = " ", y =" ", title = " ") +
+  guides(color = guide_legend(title = NULL))
+```
+
+
+## Regional Inequality  
+
+Since the reform and opening up in 1978, the income gap between eastern, central and western China has been large, as shown in Figure \@ref(fig:gini5). Benefitting from location advantages and development policies, the eastern coastal areas continue to lead in per capita household income ahead of the central and western regions. As time goes by, this gap continues to widen. In the 1980s and 1990s, the gap between the east and the west expanded rapidly, and after the 2000s, the gap between the east and the west expanded rapidly. However, the implementation of the Western Development Strategy in 1999 caused the income gap in these regions to stabilize and narrow slightly after 2009.  
+
+Figure \@ref(fig:gini6) presents the coefficient of variation (CV) of nominal regional per capita household income across China from 1978 to 2016, offering an alternative perspective to the standard Gini coefficient on regional inequality. The CV reveals a high correlation with the Gini coefficient, indicating similar patterns of inequality. After an initial decrease in the early 1980s, regional income inequality experienced two significant change in the 1990s and 2000s. However, since the mid-2000s, there has been a obvious downward trend, suggesting a movement towards regional convergence in household income. 
+
+
+```{r gini5, fig.cap="Income Gaps between East, Central, and Western China, 1978–2016"}
+region_gap <- read_excel("data5.xlsx")
+
+ggplot(region_gap, aes(x = Year)) + 
+  geom_point(aes(y = `East/West`, color = "East/West"), pch = 16) +
+  geom_line(aes(y = `East/West`, color = "East/West")) + 
+  geom_point(aes(y = `East/Middle`, color = "East/Middle"), pch = 15) + 
+  geom_line(aes(y = `East/Middle`, color = "East/Middle")) + 
+  geom_point(aes(y = `Middle/West`, color = "Middle/West"), pch = 17) +
+  geom_line(aes(y = `Middle/West`, color = "Middle/West")) + 
+  scale_x_continuous(breaks = seq(1978, 2016, by = 1))+
+  scale_color_manual(values = c("East/West" = "darkblue",
+                                "East/Middle" = "darkred",
+                                "Middle/West" = "darkgreen")) +
+  theme_classic() +
+  theme(
+    legend.title = element_blank(),
+    legend.position = "top",
+    legend.justification = "left",
+    legend.box.just = "left",
+    legend.background = element_rect(color = "black"), 
+    axis.text.x = element_text(angle = 45, size = 7, vjust = 0.5)
+  ) +
+  labs(x = " ", y =" ", title = " ") +
+  guides(color = guide_legend(title = NULL))
+```
+
+
+```{r gini6, fig.cap="Regional Income Inequality and Gini Coefficients in China, 1978–2016", out.height = "90%", out.width = "90%", fig.align='center'}
+gini6 <- read_excel("data6.xlsx")
+ggplot(gini6, aes(x = Year)) + 
+  geom_point(aes(y = `Regional Inequality_CV`, color = "Regional Inequality_CV"), pch = 16) +
+  geom_line(aes(y = `Regional Inequality_CV`, color = "Regional Inequality_CV")) + 
+  geom_point(aes(y = `Gini coefficient`, color = "Gini coefficient"), pch = 15) + 
+  geom_line(aes(y = `Gini coefficient`, color = "Gini coefficient")) + 
+  scale_x_continuous(breaks = seq(1978, 2016, by = 1))+
+  scale_color_manual(values = c("Regional Inequality_CV" = "darkblue",
+                                "Gini coefficient" = "darkred")) +
+  theme_classic() +
+  theme(
+    legend.title = element_blank(),
+    legend.position = "top",
+    legend.justification = "left",
+    legend.box.just = "left",
+    legend.background = element_rect(color = "black"), 
+    axis.text.x = element_text(angle = 45, size = 7, vjust = 0.5)
+  ) +
+  labs(x = " ", y =" ", title = " ") +
+  guides(color = guide_legend(title = NULL))
+```
+
+
+## Factor Income Inequality  
+
+Figure \@ref(fig:area), Figure \@ref(fig:area2), and Figure \@ref(fig:area3) show the changes in income sources of urban and rural households in China from the 1990s to 2016. For urban households, wage income remains the largest part of total income, but has gradually declined, offset by increases in corporate and transfer income. On the contrary, rural household income has undergone dramatic changes, with agricultural income falling significantly, mainly due to rural industrialization, which has led to a significant increase in wage income. Property and transfer income also increased, albeit to a smaller extent. Since 2013, the National Bureau of Statistics has unified urban and rural household surveys, and Figure 9 merges these data to show the national evolution of income sources. This highlights a structural shift in which owner income halved while wages, property and transfer income increased, reflecting China's post-1992 industrialization and urbanization process.
+
+
+```{r area, fig.cap="Shares of Income Sources in the Total Income for Urban Households, 1997–2012", out.height = "90%", out.width = "90%", fig.align='center'}
+income <- read_excel("data7.xlsx")
+
+income_long <- income %>% 
+  pivot_longer(
+    cols = -c(Year, `Total Income`), 
+    names_to = "IncomeSource",
+    values_to = "Value"
+  ) %>% 
+  group_by(Year) %>%
+  mutate(Proportion = Value / `Total Income`) 
+  
+
+# Plot
+ggplot(income_long, aes(x = Year, y = Proportion, fill = as.factor(IncomeSource))) +
+  geom_area() +
+  scale_fill_brewer(palette = "Set3") + 
+  theme_classic() +
+  labs(y = "Percent") +
+  scale_x_continuous(breaks = seq(1978, 2016, by = 1))+
+  theme(
+    legend.title = element_blank(),
+    legend.position = "bottom",
+    legend.background = element_rect(color = "black"),
+    axis.text.x = element_text(angle = 45, size = 7, vjust = 0.5),
+    legend.text = element_text(size = 7)
+  ) 
+```
+
+
+```{r area2, fig.cap="Shares of Income Sources in the Total Income for Rural Households, 1993–2012", out.height = "90%", out.width = "90%", fig.align='center'}
+income2 <- read_excel("data8.xlsx")
+
+income_long <- income2 %>% 
+  pivot_longer(
+    cols = -c(Year, `Total Income`), 
+    names_to = "IncomeSource",
+    values_to = "Value"
+  )
+
+# Calculate proportions
+income_long <- income_long %>% 
+  group_by(Year) %>%
+  mutate(Proportion = Value / `Total Income`) 
+  
+# Plot
+ggplot(income_long, aes(x = Year, y = Proportion, fill = as.factor(IncomeSource))) +
+  geom_area() +
+  scale_fill_brewer(palette = "Set3") + 
+  theme_classic() +
+  labs(y = "Percent") +
+  scale_x_continuous(breaks = seq(1978, 2016, by = 1))+
+  theme(
+    legend.title = element_blank(),
+    legend.position = "bottom",
+    legend.background = element_rect(color = "black"),
+    axis.text.x = element_text(angle = 45, size = 7, vjust = 0.5),
+    legend.text = element_text(size = 7)
+  ) 
+```
+
+```{r area3, fig.cap = "Shares of Income Sources in the Total Income for China, 1997–2016",  out.height = "90%", out.width = "90%", fig.align='center'}
+income3 <- read_excel("data9.xlsx")
+
+income_long <- income3 %>% 
+  pivot_longer(
+    cols = -c(Year, `Total Income`), 
+    names_to = "IncomeSource",
+    values_to = "Value"
+  )
+
+# Calculate proportions
+income_long <- income_long %>% 
+  group_by(Year) %>%
+  mutate(Proportion = Value / `Total Income`) 
+  
+# Plot
+ggplot(income_long, aes(x = Year, y = Proportion, fill = as.factor(IncomeSource))) +
+  geom_area() +
+  scale_fill_brewer(palette = "Set3") + 
+  theme_classic() +
+  labs(y = "Percent") +
+  scale_x_continuous(breaks = seq(1978, 2016, by = 1))+
+  theme(
+    legend.title = element_blank(),
+    legend.position = "bottom",
+    legend.background = element_rect(color = "black"),
+    axis.text.x = element_text(angle = 45, size = 7, vjust = 0.5),
+    legend.text = element_text(size = 7)
+  ) 
+```
+
+## Intergenerational Mobility  
+
+Fan, Yi, and Zhang (2021) studied the relationship between income inequality and intergenerational mobility in China, as shown in the Great Gatsby curve in Figure \@ref(fig:ggc). Using provincial-level data for two birth cohorts with different hukou status, they plot the intergenerational elasticity of parents' Gini coefficient against children's income. Their results show a negative correlation, suggesting that higher income inequality is associated with lower intergenerational mobility, consistent with evidence from developed countries. 
+
+
+
+```{r ggc, fig.cap="The Great Gatsby Curve Using 25 Provinces and Municipalities in Early and Late Cohorts"}
+ggc <- read_dta("data_ggc.dta")
+
+# Create a scatter plot
+# Fit the linear model
+model <- lm(gini_agr ~ ige2, data = ggc)
+
+# Create the equation text
+eq <- paste("IGE = ", round(coef(model)[1], 2), " + ", round(coef(model)[2], 2), "Gini")
+
+# Plot with annotated equation
+ggplot(ggc) +
+  geom_point(aes(x = ige2, y = gini_agr, color = as.factor(d))) +
+  geom_smooth(aes(x = ige2, y = gini_agr), 
+              method = "lm", se = FALSE, col = "darkgreen") +
+  scale_color_manual(values = c("darkblue", "darkred"),
+                     labels = c("1970–1980 (early) cohort", "1981–1988 (late) cohort")) +
+  theme_classic() +
+  theme(legend.title = element_blank(),
+        legend.position = "top",
+        legend.background = element_rect(color = "black"),
+        axis.text.x = element_text(angle = 45, size = 7, vjust = 0.5),
+        legend.text = element_text(size = 7)) +
+  labs(x = "Gini coefficient", y = "Intergenerational elasticity of income (IGE)") +
+  annotate("text", x = 0.5, y = 0.31, label = eq, hjust = 1.1, vjust = 2, 
+           size = 2.5, col = "red")
+  
+  
+```
+
+# Discussion  
+
+China's widening urban-rural income gap reflects deep-rooted systemic problems, exacerbated by the hukou system and economic reforms that have historically favored urban development. The impact of the hukou system on labor mobility has created persistent divides, highlighting the urgent need for policy reforms to give rural populations more equitable access to opportunities and public services. Despite the relaxation of household registration restrictions and efforts to revitalize the rural economy, the high correlation with the Gini coefficient suggests that the urban-rural income gap remains an important driver of overall inequality in China.  
+
+As China continues to develop, policies must not only focus on economic growth, but also on the distribution of growth. The “get rich first” policy spurred rapid development in coastal areas, but also led to the regional imbalances that the Western Development Strategy aimed to correct. Recent trends in narrowing income gaps are encouraging, but the long-term sustainability of these measures remains to be determined. Furthermore, the complexity of income distribution in China’s socioeconomic structure requires nuanced and targeted interventions. Addressing inequality within urban and rural groups is crucial as it accounts for a large proportion of overall inequality. Efforts should be made to balance the scale of opportunities and access to resources between urban and rural areas.  
+
+Evidence of a negative correlation between income inequality and intergenerational mobility in China points to the risk of entrenched inequality, as shown in The Great Gatsby Curve. The difference in income mobility between urban and rural groups shows that while some progress has been made, much more needs to be done to ensure that economic success is not overly dependent on household wealth. Addressing these gaps is not only about economic efficiency but also about social equity and cohesion. Policies must be developed to ensure that all citizens, regardless of their place of birth or the socioeconomic status of their parents, have the opportunity to improve their economic status through their own efforts and talents.  
+
+
+# Future Research  
+The above highlights several key avenues for future research on income inequality in China. Among them, the return of the one-child policy has an impact on the urban-rural income gap. Given the uneven implementation of this policy and the differential economic burden it imposes on rural households, there is an urgent need to investigate its long-term impact on human capital investment and the possible poverty traps it creates. This research direction can greatly enhance our understanding of intergenerational equity and economic mobility in China's diverse population pattern. Second, the role of global economic forces such as foreign direct investment (FDI), outsourcing, and skill-biased technological change (SBTC) in shaping domestic income inequality in China remains largely unexplored. The impact of rapid privatization and market-oriented reforms on income distribution deserves in-depth study. While these reforms have undeniably spurred China's economic growth, they may also have exacerbated income inequality. Understanding whether economic progress comes at the expense of rising inequality is critical for policymakers and may provide lessons for other countries pursuing similar growth trajectories. These research directions are not only expected to reveal the particularities of China's experience with income inequality, but also have broader implications for our understanding of economic development, social justice, and policy effectiveness in transition economies.  
+
+  
+# Conclusion  
+
+- **A generally increasing trend in the Gini coefficient has been observed over the past four decades and remains constant at the household level, region or urban-rural disparity.**
+- **According to official and unofficial estimates, inequality trends have stabilized or even declined slightly over the past decade, albeit at different levels.**
+- **Trends in urban-rural gaps and regional inequality were closely related to overall inequality in the 1980s, 1990s and early 2000s, but not in the recent decade.**
+- **There is a rising contribution of capital income to the overall income inequality, although its importance is still relatively mild. The moderation in the distribution of transfer income and wage income has played a key role in the recent reduction of overall income inequality.**
+
+
+\newpage
+
+
+# References
